@@ -196,7 +196,7 @@ end
 
 function update(self, dt)
 
-    if not self.computed then
+    --if not self.computed then
         self.constants.options = vmath.vector4(self.width, self.height, self.count, self.size)
 
         render.set_compute("raytrace")
@@ -207,7 +207,7 @@ function update(self, dt)
         render.set_compute()
 
         self.computed = true
-    end
+    --end
 
     
     local state = self.state

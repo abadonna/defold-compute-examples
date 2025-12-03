@@ -1,7 +1,7 @@
 go.property("monkey", resource.buffer("/monkey.buffer"))
 
-local WIDTH = 512
-local HEIGHT = 512
+local WIDTH = 256
+local HEIGHT = 256
 
 local DATA_TEXTURE_SIZE = 256
 
