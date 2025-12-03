@@ -18,4 +18,8 @@ scale_mode = stretch
 
 [project]
 title = raytrace
+dependencies#0 = https://github.com/britzl/defold-metrics/archive/master.zip
+
+[native_extension]
+app_manifest = /vulkan.appmanifest
 

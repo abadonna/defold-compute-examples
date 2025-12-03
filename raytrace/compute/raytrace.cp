@@ -3,8 +3,8 @@
 layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
 layout(rgba32f) uniform image2D tex_output;
-layout(rgba32f) readonly uniform image2D tex_positions;
-layout(rgba32f) readonly uniform image2D tex_normals;
+layout(rgba32f) readonly uniform restrict image2D tex_positions;
+layout(rgba32f) readonly uniform restrict image2D tex_normals;
 
 uniform uniforms
 {
