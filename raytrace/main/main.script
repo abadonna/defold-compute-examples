@@ -1,0 +1,79 @@
+go.property("monkey", resource.buffer("/monkey.buffer"))
+
+local WIDTH = 512
+local HEIGHT = 512
+
+local DATA_TEXTURE_SIZE = 256
+
+function init(self)
+
+	local buf = resource.get_buffer(self.monkey)
+	local positions = buffer.get_stream(buf, "position")
+	local normals = buffer.get_stream(buf, "normal")
+
+	-- insert mesh data into textures
+
+	local position_buffer = buffer.create(DATA_TEXTURE_SIZE * DATA_TEXTURE_SIZE, { {name = hash("rgb"), type = buffer.VALUE_TYPE_FLOAT32, count = 4} } )
+	local pstream = buffer.get_stream(position_buffer, hash("rgb"))
+	
+	local normal_buffer = buffer.create(DATA_TEXTURE_SIZE * DATA_TEXTURE_SIZE, { {name = hash("rgb"), type = buffer.VALUE_TYPE_FLOAT32, count = 4} } )
+	local nstream = buffer.get_stream(normal_buffer, hash("rgb"))
+
+	local j = 1
+	for i = 1, #positions/3, 3 do
+		pstream[j] = positions[i]
+		nstream[j] = normals[i]
+
+		pstream[j+1] = positions[i+1]
+		nstream[j+1] = normals[i+1]
+
+		pstream[j+2] = positions[i+2]
+		nstream[j+2] = normals[i+2]
+
+		pstream[j+3] = 1
+		nstream[j+3] = 1
+
+		j = j + 4
+	end
+
+	local pdata = resource.create_texture("/pdata.texturec", {
+		type   = resource.TEXTURE_TYPE_IMAGE_2D,
+		width  = DATA_TEXTURE_SIZE,
+		height = DATA_TEXTURE_SIZE,
+		format = graphics.TEXTURE_FORMAT_RGBA32F,
+		flags  = resource.TEXTURE_USAGE_FLAG_STORAGE + resource.TEXTURE_USAGE_FLAG_SAMPLE,
+	}, position_buffer)
+
+	local ndata = resource.create_texture("/ndata.texturec", {
+		type   = resource.TEXTURE_TYPE_IMAGE_2D,
+		width  = DATA_TEXTURE_SIZE,
+		height = DATA_TEXTURE_SIZE,
+		format = graphics.TEXTURE_FORMAT_RGBA32F,
+		flags  = resource.TEXTURE_USAGE_FLAG_STORAGE + resource.TEXTURE_USAGE_FLAG_SAMPLE,
+	}, normal_buffer)
+
+	-- create output texture
+
+	local output = resource.create_texture("/output.texturec", {
+		type   = resource.TEXTURE_TYPE_IMAGE_2D,
+		width  = WIDTH,
+		height = HEIGHT,
+		format = resource.TEXTURE_FORMAT_RGBA,
+		flags  = resource.TEXTURE_USAGE_FLAG_STORAGE + resource.TEXTURE_USAGE_FLAG_SAMPLE,
+	})
+
+	go.set("#model", "texture0", output)
+
+	-- notify the render script of the input and output textures and mesh params
+	
+	msg.post("@render:", "set_mesh_data", {
+		texture_positions = resource.get_texture_info(pdata).handle,
+		texture_normals = resource.get_texture_info(ndata).handle,
+		texture_out = resource.get_texture_info(output).handle,
+		width = WIDTH,
+		height = HEIGHT,
+		size = DATA_TEXTURE_SIZE,
+		face_count = #positions / 9
+	})
+
+end

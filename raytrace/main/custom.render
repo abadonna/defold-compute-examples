@@ -1,0 +1,5 @@
+script: "/main/custom.render_script"
+render_resources {
+  name: "raytrace"
+  path: "/compute/raytrace.compute"
+}
