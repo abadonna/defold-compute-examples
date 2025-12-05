@@ -1,0 +1,25 @@
+script: "/main/custom.render_script"
+render_resources {
+  name: "simulate"
+  path: "/compute/simulate.compute"
+}
+render_resources {
+  name: "initialize"
+  path: "/compute/initialize.compute"
+}
+render_resources {
+  name: "clear"
+  path: "/compute/clear.compute"
+}
+render_resources {
+  name: "density"
+  path: "/compute/density.compute"
+}
+render_resources {
+  name: "pressure"
+  path: "/compute/pressure.compute"
+}
+render_resources {
+  name: "predict"
+  path: "/compute/predict.compute"
+}

@@ -1,0 +1,22 @@
+[bootstrap]
+main_collection = /main/main.collectionc
+render = /main/custom.renderc
+
+[script]
+shared_state = 1
+
+[display]
+width = 640
+height = 640
+high_dpi = 1
+
+[android]
+input_method = HiddenInputField
+
+[html5]
+scale_mode = stretch
+
+[project]
+title = liquid 2d
+dependencies#0 = https://github.com/britzl/defold-metrics/archive/master.zip
+
