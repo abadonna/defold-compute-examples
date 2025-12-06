@@ -6,8 +6,8 @@ render = /main/custom.renderc
 shared_state = 1
 
 [display]
-width = 640
-height = 640
+width = 400
+height = 400
 high_dpi = 1
 
 [android]
@@ -19,4 +19,7 @@ scale_mode = stretch
 [project]
 title = liquid 2d
 dependencies#0 = https://github.com/britzl/defold-metrics/archive/master.zip
+
+[native_extension]
+app_manifest = /vulkan.appmanifest
 

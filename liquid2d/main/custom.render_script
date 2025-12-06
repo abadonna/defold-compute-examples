@@ -170,7 +170,8 @@ local function reset_camera_world(state)
 end
 
 function init(self)
-    self.time = vmath.vector4(0);
+    self.mouse = vmath.vector4(0)
+    self.time = vmath.vector4(0)
     self.constants = render.constant_buffer()
     self.predicates = create_predicates("tile", "gui", "particle", "model", "debug_text")
 
@@ -214,6 +215,8 @@ function update(self, dt)
         self.need_update = false
         local gravity = 200
         self.constants.options = vmath.vector4(self.dt, gravity, 0, 0)
+        self.constants.mouse = self.mouse
+        self.mouse.w = 0 --- reset strength
 
         render.set_compute("predict")
         render.dispatch_compute(32, 32, 1, {constants = self.constants})
@@ -326,5 +329,8 @@ function on_message(self, message_id, message)
     elseif message_id == hash("update_liquid") then
         self.need_update = true
         self.dt = message.dt
+
+    elseif message_id == hash("push") then
+        self.mouse = message.position
     end
 end
