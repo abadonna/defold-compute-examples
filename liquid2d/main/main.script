@@ -16,14 +16,6 @@ function init(self)
 		flags  = resource.TEXTURE_USAGE_FLAG_STORAGE + resource.TEXTURE_USAGE_FLAG_SAMPLE,
 	})
 
-	local t_pressure = resource.create_texture("/pressure.texturec", {
-		type   = resource.TEXTURE_TYPE_IMAGE_2D,
-		width  = 32,
-		height = 32,
-		format = resource.TEXTURE_FORMAT_RGBA32F,
-		flags  = resource.TEXTURE_USAGE_FLAG_STORAGE + resource.TEXTURE_USAGE_FLAG_SAMPLE,
-	})
-
 	local t_density = resource.create_texture("/density.texturec", {
 		type   = resource.TEXTURE_TYPE_IMAGE_2D,
 		width  = 32,
@@ -44,7 +36,6 @@ function init(self)
 		points = resource.get_texture_info(t_points).handle,
 		predict =  resource.get_texture_info(t_predict).handle,
 		density = resource.get_texture_info(t_density).handle,
-		pressure = resource.get_texture_info(t_pressure).handle,
 		texture_out = resource.get_texture_info(t_backing).handle
 	}
 

@@ -1,6 +1,6 @@
 compute_program: "/compute/initialize.cp"
 samplers {
-  name: "texture_out"
+  name: "points"
   wrap_u: WRAP_MODE_REPEAT
   wrap_v: WRAP_MODE_REPEAT
   filter_min: FILTER_MODE_MIN_NEAREST

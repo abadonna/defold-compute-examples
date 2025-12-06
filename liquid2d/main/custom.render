@@ -23,3 +23,7 @@ render_resources {
   name: "predict"
   path: "/compute/predict.compute"
 }
+render_resources {
+  name: "viscosity"
+  path: "/compute/viscosity.compute"
+}

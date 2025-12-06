@@ -1,4 +1,4 @@
-compute_program: "/compute/predict.cp"
+compute_program: "/compute/viscosity.cp"
 samplers {
   name: "predict"
   wrap_u: WRAP_MODE_REPEAT

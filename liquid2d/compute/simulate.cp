@@ -3,8 +3,7 @@
 layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
 layout(rgba32f) uniform image2D points;
-layout(rgba32f) uniform image2D texture_pressure;
-layout(rgba32f) uniform image2D texture_density;
+layout(rgba32f) uniform image2D predict;
 layout(rgba32f) uniform image2D texture_out;
 
 uniform uniforms
@@ -70,7 +69,6 @@ vec3 gradient(float t) {
 void main()
 {
     float dt = options.x;
-    float gravity = options.y;
     
     ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
 
@@ -78,17 +76,10 @@ void main()
     vec2 velocity = data.zw;
     vec2 position = data.xy;
     
-    float density = imageLoad(texture_density, texelCoord).x;
-    vec2 pressure = imageLoad(texture_pressure, texelCoord).xy;
-    vec2 pressure_acc = pressure / density;
-
-    velocity += vec2(0, -1) * gravity * dt;
-    velocity += pressure_acc * dt;
-    
     position += velocity * dt; 
     resolve_collisions(position, velocity);
 
-    float v = smoothstep(0, 300, length(velocity));
+    float v = smoothstep(0, 250, length(velocity));
    
     draw_circle(position, gradient(v));
     imageStore(points, texelCoord, vec4(position, velocity));

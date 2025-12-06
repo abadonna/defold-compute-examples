@@ -3,7 +3,7 @@
 layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
 layout(rgba32f) uniform image2D points;
-layout(rgba32f) uniform image2D texture_out;
+layout(rgba32f) uniform image2D predict;
 
 uniform uniforms
 {
@@ -24,5 +24,5 @@ void main()
     vec2 velocity = data.zw + vec2(0, -1) * gravity * dt;
     vec2 position = data.xy + velocity * dt; 
     
-    imageStore(texture_out, texelCoord, vec4(position, velocity));
+    imageStore(predict, texelCoord, vec4(position, velocity));
 }

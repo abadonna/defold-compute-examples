@@ -2,7 +2,7 @@
 
 layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
-layout(rgba32f) uniform image2D texture_out;
+layout(rgba32f) uniform image2D points;
 
 uniform uniforms
 {
@@ -25,5 +25,5 @@ void main()
     float center = (1024 - 32 * size) /2.;
     vec4 value = vec4(gl_GlobalInvocationID.x * size + center, gl_GlobalInvocationID.y * size + center, 0, 0);
 
-    imageStore(texture_out, texelCoord, value);
+    imageStore(points, texelCoord, value);
 }

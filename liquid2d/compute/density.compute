@@ -1,6 +1,6 @@
 compute_program: "/compute/density.cp"
 samplers {
-  name: "texture_out"
+  name: "texture_density"
   wrap_u: WRAP_MODE_REPEAT
   wrap_v: WRAP_MODE_REPEAT
   filter_min: FILTER_MODE_MIN_NEAREST
@@ -8,7 +8,7 @@ samplers {
   max_anisotropy: 0.0
 }
 samplers {
-  name: "points"
+  name: "predict"
   wrap_u: WRAP_MODE_REPEAT
   wrap_v: WRAP_MODE_REPEAT
   filter_min: FILTER_MODE_MIN_NEAREST

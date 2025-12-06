@@ -196,11 +196,15 @@ function init(self)
 end
 
 function update(self, dt)
+
+    render.enable_texture("points", self.points)
+    render.enable_texture("predict", self.predict)
+    render.enable_texture("texture_density", self.density)
+    render.enable_texture("texture_out", self.texture_out)
     
     if not self.points_initialized then
         self.points_initialized = true
         render.set_compute("initialize")
-        render.enable_texture("texture_out", self.points)
         self.constants.rnd = vmath.vector4(math.random(1000), math.random(1000), 0 , 0)
         render.dispatch_compute(32, 32, 1, {constants = self.constants})
         render.set_compute()
@@ -212,34 +216,26 @@ function update(self, dt)
         self.constants.options = vmath.vector4(self.dt, gravity, 0, 0)
 
         render.set_compute("predict")
-        render.enable_texture("points", self.points)
-        render.enable_texture("texture_out", self.predict)
         render.dispatch_compute(32, 32, 1, {constants = self.constants})
         
         render.set_compute("clear")
-        render.enable_texture("texture_out", self.texture_out)
         render.dispatch_compute(1024, 1024, 1)
 
         render.set_compute("density")
-        render.enable_texture("points", self.predict)
-        render.enable_texture("texture_out", self.density)
         render.dispatch_compute(32, 32, 1)
 
         render.set_compute("pressure")
-        render.enable_texture("points", self.predict)
-        render.enable_texture("texture_density", self.density)
-        render.enable_texture("texture_out", self.pressure)
-        render.dispatch_compute(32, 32, 1)
+        render.dispatch_compute(32, 32, 1, {constants = self.constants})
+
+        render.set_compute("viscosity")
+        render.dispatch_compute(32, 32, 1, {constants = self.constants})
         
         render.set_compute("simulate")
-        render.enable_texture("points", self.points)
-        render.enable_texture("texture_pressure", self.pressure)
-        render.enable_texture("texture_density", self.density)
-        render.enable_texture("texture_out", self.texture_out)
         render.dispatch_compute(32, 32, 1, {constants = self.constants})
 
         render.set_compute()
     end
+    
 
     
     local state = self.state
@@ -325,7 +321,6 @@ function on_message(self, message_id, message)
         self.points = message.points
         self.predict = message.predict
         self.texture_out = message.texture_out
-        self.pressure = message.pressure
         self.density = message.density
 
     elseif message_id == hash("update_liquid") then

@@ -2,9 +2,13 @@
 
 layout (local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 
-layout(rgba32f) uniform image2D points;
+layout(rgba32f) uniform image2D predict;
 layout(rgba32f) uniform image2D texture_density;
-layout(rgba32f) uniform image2D texture_out;
+
+uniform uniforms
+{
+    vec4 options; // x - dt, y - gravity
+};
 
 float radius = 50;
 float scaling_factor = 1.;
@@ -32,27 +36,12 @@ shared vec2 sample_velocity;
 shared float sample_density;
 shared vec2[1024] pressure;
 
-void main()
-{
-    ivec2 texelCoord = ivec2(gl_WorkGroupID.xy);
-    ivec2 pointCoord = ivec2(gl_LocalInvocationID.xy);
-
-    if (texelCoord == pointCoord) return;
-    
-    if (gl_LocalInvocationIndex == 0) {
-        vec4 point = imageLoad(points, texelCoord);
-        sample_position = point.xy;
-        sample_velocity = point.zw;
-        sample_density = imageLoad(texture_density, texelCoord).x;
-    }
-    
-    barrier();
-
-    vec4 point = imageLoad(points, pointCoord);
+void calculate(ivec2 pointCoord) {
+    vec4 point = imageLoad(predict, pointCoord);
     vec2 position = point.xy;
     vec2 offset = position - sample_position;
     float dst = length(offset);
-    
+
     if (dst > radius) {
         pressure[gl_LocalInvocationIndex] = vec2(0);
     } else {
@@ -62,6 +51,23 @@ void main()
         float shared_pressure = calc_shared_pressure(density, sample_density);
         pressure[gl_LocalInvocationIndex] = shared_pressure * dir * slope  / density;
     }
+}
+
+void main()
+{
+    ivec2 texelCoord = ivec2(gl_WorkGroupID.xy);
+    ivec2 pointCoord = ivec2(gl_LocalInvocationID.xy);
+    
+    if (gl_LocalInvocationIndex == 0) {
+        vec4 point = imageLoad(predict, texelCoord);
+        sample_position = point.xy;
+        sample_velocity = point.zw;
+        sample_density = imageLoad(texture_density, texelCoord).x;
+    }
+    
+    barrier();
+
+    if (texelCoord != pointCoord) calculate(pointCoord);
     
     barrier();
 
@@ -75,7 +81,10 @@ void main()
     }
  
     if (gl_LocalInvocationIndex == 0) {
-        imageStore(texture_out, texelCoord, vec4(pressure[0], 0, 0));
+        float dt = options.x;
+        vec2 acceleration = pressure[0] / sample_density;
+        sample_velocity += acceleration * dt;
+        imageStore(predict, texelCoord, vec4(sample_position, sample_velocity));
     }
 
 }
