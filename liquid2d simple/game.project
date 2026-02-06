@@ -17,7 +17,7 @@ input_method = HiddenInputField
 scale_mode = stretch
 
 [project]
-title = liquid 2d
+title = liquid 2d simple
 dependencies#0 = https://github.com/britzl/defold-metrics/archive/master.zip
 
 [native_extension]
