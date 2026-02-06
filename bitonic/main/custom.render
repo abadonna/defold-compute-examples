@@ -1,0 +1,9 @@
+script: "/main/custom.render_script"
+render_resources {
+  name: "sort"
+  path: "/compute/sort.compute"
+}
+render_resources {
+  name: "paint"
+  path: "/compute/paint.compute"
+}

@@ -1,0 +1,44 @@
+local settings = require 'settings'
+
+function init(self)
+
+	math.randomseed(socket.gettime() * 1000000)
+	
+	local random_buffer = buffer.create(settings.texture_size * settings.texture_size, { {name = hash("rgba"), type = buffer.VALUE_TYPE_FLOAT32, count = 4} } )
+	local pstream = buffer.get_stream(random_buffer, hash("rgba"))
+
+	for i = 1, settings.texture_size * settings.texture_size * 4, 4 do
+		pstream[i] = math.random(1, 255)
+		
+		pstream[i+1] = 0
+		pstream[i+2] = 0
+		pstream[i+3] = 0
+	end
+	
+	local t_points = resource.create_texture("/points.texturec", {
+		type   = resource.TEXTURE_TYPE_IMAGE_2D,
+		width  = settings.texture_size,
+		height = settings.texture_size,
+		format = resource.TEXTURE_FORMAT_RGBA32F,
+		flags  = resource.TEXTURE_USAGE_FLAG_STORAGE + resource.TEXTURE_USAGE_FLAG_SAMPLE,
+	}, random_buffer)
+
+	local t_backing = resource.create_texture("/results.texturec", {
+		type   = resource.TEXTURE_TYPE_IMAGE_2D,
+		width  = settings.texture_size,
+		height = settings.texture_size,
+		format = resource.TEXTURE_FORMAT_RGBA,
+		flags  = resource.TEXTURE_USAGE_FLAG_STORAGE + resource.TEXTURE_USAGE_FLAG_SAMPLE,
+	})
+
+	local textures = {
+		points = resource.get_texture_info(t_points).handle,
+		texture_out = resource.get_texture_info(t_backing).handle
+	}
+
+	-- notify the renderer of the input and output textures
+	msg.post("@render:", "set_backing_texture", textures)
+
+	go.set("#model", "texture0", t_backing)
+	msg.post(".", "acquire_input_focus")
+end
