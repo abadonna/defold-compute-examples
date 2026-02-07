@@ -222,23 +222,14 @@ function update(self, dt)
 
     local num_particles = settings.texture_size * settings.texture_size
 
-    local groups = math.max(1, num_particles / 512)
-    local idx = 1
-    local k = 2
+    local groups = math.ceil(num_particles / 512)
 
-    while k <= num_particles do
-        local j = bit.rshift(k, 1)
-        while j > 0 do
-            render.dispatch_compute(groups, 1, 1, {constants = self.constants[idx]})
-            j = bit.rshift(j, 1)
-            idx = idx + 1
-        end
-        k = k * 2
+    for _, cb in ipairs(self.constants) do
+        render.dispatch_compute(groups, 1, 1, {constants = cb})
     end   
    
     render.set_compute("paint")
     render.dispatch_compute(settings.texture_size, settings.texture_size, 1, {})
-
     
     local state = self.state
     if not state.valid then
