@@ -1,0 +1,69 @@
+local settings = require 'settings'
+
+function init(self)
+	local t_points = resource.create_texture("/points.texturec", {
+		type   = resource.TEXTURE_TYPE_IMAGE_2D,
+		width  = settings.texture_size,
+		height = settings.texture_size,
+		format = resource.TEXTURE_FORMAT_RGBA32F,
+		flags  = resource.TEXTURE_USAGE_FLAG_STORAGE + resource.TEXTURE_USAGE_FLAG_SAMPLE,
+	})
+
+	local t_spatial = resource.create_texture("/hash.texturec", {
+		type   = resource.TEXTURE_TYPE_IMAGE_2D,
+		width  = settings.texture_size,
+		height = settings.texture_size,
+		format = resource.TEXTURE_FORMAT_RGBA32F,
+		flags  = resource.TEXTURE_USAGE_FLAG_STORAGE + resource.TEXTURE_USAGE_FLAG_SAMPLE,
+	})
+
+	local t_predict = resource.create_texture("/predict.texturec", {
+		type   = resource.TEXTURE_TYPE_IMAGE_2D,
+		width  = settings.texture_size,
+		height = settings.texture_size,
+		format = resource.TEXTURE_FORMAT_RGBA32F,
+		flags  = resource.TEXTURE_USAGE_FLAG_STORAGE + resource.TEXTURE_USAGE_FLAG_SAMPLE,
+	})
+
+	local t_density = resource.create_texture("/density.texturec", {
+		type   = resource.TEXTURE_TYPE_IMAGE_2D,
+		width  = settings.texture_size,
+		height = settings.texture_size,
+		format = resource.TEXTURE_FORMAT_RGBA32F,
+		flags  = resource.TEXTURE_USAGE_FLAG_STORAGE + resource.TEXTURE_USAGE_FLAG_SAMPLE,
+	})
+
+	local t_backing = resource.create_texture("/results.texturec", {
+		type   = resource.TEXTURE_TYPE_IMAGE_2D,
+		width  = settings.display_size,
+		height = settings.display_size,
+		format = resource.TEXTURE_FORMAT_RGBA,
+		flags  = resource.TEXTURE_USAGE_FLAG_STORAGE + resource.TEXTURE_USAGE_FLAG_SAMPLE,
+	})
+
+	local textures = {
+		points = resource.get_texture_info(t_points).handle,
+		predict =  resource.get_texture_info(t_predict).handle,
+		density = resource.get_texture_info(t_density).handle,
+		texture_out = resource.get_texture_info(t_backing).handle,
+		spatial = resource.get_texture_info(t_spatial).handle,
+	}
+
+	-- notify the renderer of the input and output textures
+	msg.post("@render:", "set_backing_texture", textures)
+
+	go.set("#model", "texture0", t_backing)
+	msg.post(".", "acquire_input_focus")
+end
+
+
+function fixed_update(self, dt)
+	--msg.post("@render:", "update_liquid", {dt = dt})
+end
+
+
+function on_input(self, action_id, action)
+	if action_id == hash("touch") then
+		msg.post("@render:", "push", {position = vmath.vector4(1024 * action.x / 400, 1024 * action.y / 400, 0, 15)})
+	end
+end
