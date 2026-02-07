@@ -27,7 +27,7 @@ void main()
     vec2 velocity = data.zw;
     vec2 acceleration = vec2(0, -1) * gravity;
 
-    /*
+    
     if (mouse.w != 0) {
         vec2 offset = mouse.xy - position;
         float dst = length(offset);
@@ -39,7 +39,7 @@ void main()
             acceleration *= dir * center * mouse.w;
             acceleration -= velocity * center;
         }
-    }*/
+    }
 
     velocity += acceleration * dt;
     position += velocity * dt;
