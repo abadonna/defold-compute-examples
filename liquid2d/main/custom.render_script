@@ -175,8 +175,7 @@ function init(self)
     self.mouse = vmath.vector4(0)
     self.time = vmath.vector4(0)
     self.constants = render.constant_buffer()
-    self.predicates = create_predicates("tile", "gui", "particle", "model", "debug_text")
-
+    self.predicates = create_predicates("tile", "gui", "particle", "model", "debug_text", "quad")
 
     self.sort = {}
     local num_particles = settings.texture_size * settings.texture_size
@@ -192,6 +191,20 @@ function init(self)
         end
         k = k * 2
     end
+
+    local color_params = {
+        format     = graphics.TEXTURE_FORMAT_RGB,
+        width      = settings.display_size,
+        height     = settings.display_size,
+        min_filter = graphics.TEXTURE_FILTER_LINEAR,
+        mag_filter = graphics.TEXTURE_FILTER_LINEAR,
+        u_wrap     = graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,
+        v_wrap     = graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,
+    }
+
+    self.liquid = render.render_target({
+        [render.BUFFER_COLOR0_BIT] = color_params
+    })
     
 
     -- default is stretch projection. copy from builtins and change for different projection
@@ -217,6 +230,10 @@ end
 
 function update(self, dt)
 
+    render.set_render_target(self.liquid)
+    render.clear({[graphics.BUFFER_TYPE_COLOR0_BIT] = vmath.vector4(0, 0, 0, 0)})
+    render.set_render_target(render.RENDER_TARGET_DEFAULT)
+
     local num_particles = settings.texture_size * settings.texture_size
     local groups = math.ceil(num_particles / 256)
 
@@ -224,7 +241,7 @@ function update(self, dt)
     render.enable_texture("predict", self.predict)
     render.enable_texture("spatial", self.spatial)
     render.enable_texture("texture_density", self.density)
-    render.enable_texture("texture_out", self.texture_out)
+    render.enable_texture("texture_out", self.liquid)
 
     self.constants.options = vmath.vector4(self.dt or dt, settings.gravity, settings.texture_size, num_particles)
     
@@ -232,14 +249,12 @@ function update(self, dt)
         self.points_initialized = true
         render.set_compute("initialize")
         self.constants.display = vmath.vector4(settings.display_size, 0, 0, 0)
-        pprint(self.constants.display)
         render.dispatch_compute(settings.texture_size, settings.texture_size, 1, {constants = self.constants})
         render.set_compute()
         self.need_update = true
     end
 
     if self.need_update then
-        self.dt = dt
         --self.need_update = false
         
         self.constants.mouse = self.mouse
@@ -257,9 +272,6 @@ function update(self, dt)
         render.set_compute("offsets")
         render.dispatch_compute(groups, 1, 1, {constants = self.constants})
         
-        render.set_compute("clear")
-        render.dispatch_compute(math.ceil(settings.display_size * settings.display_size  / 256), 1, 1, {constants = self.constants})
-
         render.set_compute("density")
         render.dispatch_compute(groups, 1, 1, {constants = self.constants})
 
@@ -311,6 +323,9 @@ function update(self, dt)
     -- render the other components: sprites, tilemaps, particles etc
     --
     render.enable_state(graphics.STATE_BLEND)
+    render.enable_texture(0, self.liquid, render.BUFFER_COLOR0_BIT)
+    render.draw(predicates.quad, draw_options_world)
+    render.disable_texture(0)
     render.draw(predicates.tile, draw_options_world)
     render.draw(predicates.particle, draw_options_world)
     render.disable_state(graphics.STATE_DEPTH_TEST)
@@ -359,7 +374,6 @@ function on_message(self, message_id, message)
     elseif message_id == hash("set_backing_texture") then
         self.points = message.points
         self.predict = message.predict
-        self.texture_out = message.texture_out
         self.density = message.density
         self.spatial = message.spatial
 

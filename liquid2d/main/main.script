@@ -33,26 +33,15 @@ function init(self)
 		flags  = resource.TEXTURE_USAGE_FLAG_STORAGE + resource.TEXTURE_USAGE_FLAG_SAMPLE,
 	})
 
-	local t_backing = resource.create_texture("/results.texturec", {
-		type   = resource.TEXTURE_TYPE_IMAGE_2D,
-		width  = settings.display_size,
-		height = settings.display_size,
-		format = resource.TEXTURE_FORMAT_RGBA,
-		flags  = resource.TEXTURE_USAGE_FLAG_STORAGE + resource.TEXTURE_USAGE_FLAG_SAMPLE,
-	})
-
 	local textures = {
 		points = resource.get_texture_info(t_points).handle,
 		predict =  resource.get_texture_info(t_predict).handle,
-		density = resource.get_texture_info(t_density).handle,
-		texture_out = resource.get_texture_info(t_backing).handle,
+		density = resource.get_texture_info(t_density).handle, -- todo: we can keep density and spatial info in the same texture
 		spatial = resource.get_texture_info(t_spatial).handle,
 	}
 
-	-- notify the renderer of the input and output textures
+	-- notify the renderer of the input textures, output texture is render target
 	msg.post("@render:", "set_backing_texture", textures)
-
-	go.set("#model", "texture0", t_backing)
 	msg.post(".", "acquire_input_focus")
 end
 

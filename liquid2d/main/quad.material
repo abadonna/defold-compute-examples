@@ -1,5 +1,5 @@
 name: "quad"
-tags: "tile"
+tags: "quad"
 vertex_program: "/main/quad.vp"
 fragment_program: "/main/quad.fp"
 samplers {

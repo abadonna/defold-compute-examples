@@ -8,10 +8,6 @@ render_resources {
   path: "/compute/initialize.compute"
 }
 render_resources {
-  name: "clear"
-  path: "/compute/clear.compute"
-}
-render_resources {
   name: "density"
   path: "/compute/density.compute"
 }
