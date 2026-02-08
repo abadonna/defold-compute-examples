@@ -1,6 +1,7 @@
 local settings = require 'settings'
 
 function init(self)
+	
 	local t_points = resource.create_texture("/points.texturec", {
 		type   = resource.TEXTURE_TYPE_IMAGE_2D,
 		width  = settings.texture_size,
@@ -13,7 +14,7 @@ function init(self)
 		type   = resource.TEXTURE_TYPE_IMAGE_2D,
 		width  = settings.texture_size,
 		height = settings.texture_size,
-		format = resource.TEXTURE_FORMAT_RGBA32F,
+		format = resource.TEXTURE_FORMAT_RG32F,
 		flags  = resource.TEXTURE_USAGE_FLAG_STORAGE + resource.TEXTURE_USAGE_FLAG_SAMPLE,
 	})
 
@@ -29,14 +30,14 @@ function init(self)
 		type   = resource.TEXTURE_TYPE_IMAGE_2D,
 		width  = settings.texture_size,
 		height = settings.texture_size,
-		format = resource.TEXTURE_FORMAT_RGBA32F,
+		format = resource.TEXTURE_FORMAT_R32F,
 		flags  = resource.TEXTURE_USAGE_FLAG_STORAGE + resource.TEXTURE_USAGE_FLAG_SAMPLE,
 	})
 
 	local textures = {
 		points = resource.get_texture_info(t_points).handle,
 		predict =  resource.get_texture_info(t_predict).handle,
-		density = resource.get_texture_info(t_density).handle, -- todo: we can keep density and spatial info in the same texture
+		density = resource.get_texture_info(t_density).handle,
 		spatial = resource.get_texture_info(t_spatial).handle,
 	}
 

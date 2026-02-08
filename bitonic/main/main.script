@@ -4,22 +4,18 @@ function init(self)
 
 	math.randomseed(socket.gettime() * 1000000)
 	
-	local random_buffer = buffer.create(settings.texture_size * settings.texture_size, { {name = hash("rgba"), type = buffer.VALUE_TYPE_FLOAT32, count = 4} } )
+	local random_buffer = buffer.create(settings.texture_size * settings.texture_size, { {name = hash("rgba"), type = buffer.VALUE_TYPE_FLOAT32, count = 1} } )
 	local pstream = buffer.get_stream(random_buffer, hash("rgba"))
 
-	for i = 1, settings.texture_size * settings.texture_size * 4, 4 do
+	for i = 1, settings.texture_size * settings.texture_size, 1 do
 		pstream[i] = math.random(1, 255)
-		
-		pstream[i+1] = 0
-		pstream[i+2] = 0
-		pstream[i+3] = 0
 	end
 	
 	local t_points = resource.create_texture("/points.texturec", {
 		type   = resource.TEXTURE_TYPE_IMAGE_2D,
 		width  = settings.texture_size,
 		height = settings.texture_size,
-		format = resource.TEXTURE_FORMAT_RGBA32F,
+		format = resource.TEXTURE_FORMAT_R32F,
 		flags  = resource.TEXTURE_USAGE_FLAG_STORAGE + resource.TEXTURE_USAGE_FLAG_SAMPLE,
 	}, random_buffer)
 
