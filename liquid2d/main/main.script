@@ -54,6 +54,12 @@ end
 
 function on_input(self, action_id, action)
 	if action_id == hash("touch") then
-		msg.post("@render:", "push", {position = vmath.vector4(settings.display_size * action.x / 500, settings.display_size * action.y / 500, 0, 50)})
+		msg.post("@render:", "push", {
+			position = vmath.vector4(
+				settings.display_size * action.x / 500, 
+				settings.display_size * action.y / 500, 
+				0, 
+				settings.mouse_power)
+		})
 	end
 end

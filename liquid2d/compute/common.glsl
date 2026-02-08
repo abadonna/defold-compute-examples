@@ -26,11 +26,6 @@ uint hash_cell(ivec2 cell)
 	return (a + b);
 }
 
-uint hash_cell(vec2 cell)
-{
-	return hash_cell(ivec2(cell));
-}
-
 uint cell_key(uint hash)
 {
 	return hash % uint(options.w);

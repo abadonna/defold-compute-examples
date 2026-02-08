@@ -15,9 +15,8 @@ void main()
 
     float screen_size = display.x;
 
-    // Fit to screen, BUT cap at 20.0 pixels max
     float fit_spacing = screen_size / float(grid_dim);
-    float spacing = min(20.0, fit_spacing);
+    float spacing = min(10.0, fit_spacing);
 
     float total_block_size = float(grid_dim) * spacing;
     float offset = (screen_size - total_block_size) * 0.5;

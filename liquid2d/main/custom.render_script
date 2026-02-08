@@ -271,7 +271,7 @@ function update(self, dt)
 
         render.set_compute("offsets")
         render.dispatch_compute(groups, 1, 1, {constants = self.constants})
-        
+
         render.set_compute("density")
         render.dispatch_compute(groups, 1, 1, {constants = self.constants})
 
@@ -286,8 +286,6 @@ function update(self, dt)
 
         render.set_compute()
     end
-    
-
     
     local state = self.state
     if not state.valid then

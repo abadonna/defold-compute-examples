@@ -46,8 +46,9 @@ void main()
     
     imageStore(predict, coord, vec4(position, velocity));
 
-    vec2 cell = get_cell(position);
+    ivec2 cell = get_cell(position);
     uint hash = hash_cell(cell);
     uint key = cell_key(hash);
+    
     imageStore(spatial, coord, uvec4(key, num_particles, 0, 0));
 }
