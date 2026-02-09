@@ -1,0 +1,110 @@
+local settings = require 'settings'
+
+local function create_mesh(self)
+
+	local num_particles = settings.texture_size * settings.texture_size
+	
+	local buf = buffer.create(num_particles * 6, {
+		{ name = hash("idx"), type = buffer.VALUE_TYPE_FLOAT32, count = 1 },
+		{ name = hash("texcoord0"), type = buffer.VALUE_TYPE_FLOAT32, count = 2 }
+	})
+
+	-- Get streams
+	local stream_id = buffer.get_stream(buf, hash("idx"))
+	local stream_uv = buffer.get_stream(buf, hash("texcoord0"))
+
+	local i = 1
+	for p = 0, num_particles - 1 do
+		stream_id[i] = p; stream_uv[i*2-1] = 0; stream_uv[i*2] = 0; i=i+1
+		stream_id[i] = p; stream_uv[i*2-1] = 1; stream_uv[i*2] = 0; i=i+1
+		stream_id[i] = p; stream_uv[i*2-1] = 0; stream_uv[i*2] = 1; i=i+1
+
+		stream_id[i] = p; stream_uv[i*2-1] = 1; stream_uv[i*2] = 0; i=i+1
+		stream_id[i] = p; stream_uv[i*2-1] = 1; stream_uv[i*2] = 1; i=i+1
+		stream_id[i] = p; stream_uv[i*2-1] = 0; stream_uv[i*2] = 1; i=i+1
+	end
+
+	local res = go.get("/particles#mesh", "vertices")
+	resource.set_buffer(res, buf)
+	go.set("/particles#mesh", "options", vmath.vector4(settings.texture_size, settings.point_size, 0, 0))
+end
+
+function init(self)
+	msg.post(".", "acquire_input_focus")
+	msg.post("@render:", "use_camera_projection")
+	msg.post("camera", "acquire_camera_focus")
+
+	create_mesh(self)
+	
+	local t_points = resource.create_texture("/positions.texturec", {
+		type   = graphics.TEXTURE_TYPE_IMAGE_2D,
+		width  = settings.texture_size,
+		height = settings.texture_size,
+		format = graphics.TEXTURE_FORMAT_RGBA32F,
+		flags  = graphics.TEXTURE_USAGE_FLAG_STORAGE + graphics.TEXTURE_USAGE_FLAG_SAMPLE,
+	})
+
+	local t_velocity = resource.create_texture("/velocity.texturec", {
+		type   = graphics.TEXTURE_TYPE_IMAGE_2D,
+		width  = settings.texture_size,
+		height = settings.texture_size,
+		format = graphics.TEXTURE_FORMAT_RGBA32F,
+		flags  = graphics.TEXTURE_USAGE_FLAG_STORAGE + graphics.TEXTURE_USAGE_FLAG_SAMPLE,
+	})
+
+	local t_spatial = resource.create_texture("/hash.texturec", {
+		type   = graphics.TEXTURE_TYPE_IMAGE_2D,
+		width  = settings.texture_size,
+		height = settings.texture_size,
+		format = graphics.TEXTURE_FORMAT_RG32F,
+		flags  = graphics.TEXTURE_USAGE_FLAG_STORAGE + graphics.TEXTURE_USAGE_FLAG_SAMPLE,
+	})
+
+	local t_predict = resource.create_texture("/predict.texturec", {
+		type   = graphics.TEXTURE_TYPE_IMAGE_2D,
+		width  = settings.texture_size,
+		height = settings.texture_size,
+		format = graphics.TEXTURE_FORMAT_RGBA32F,
+		flags  = graphics.TEXTURE_USAGE_FLAG_STORAGE + graphics.TEXTURE_USAGE_FLAG_SAMPLE,
+	})
+
+	local t_density = resource.create_texture("/density.texturec", {
+		type   = graphics.TEXTURE_TYPE_IMAGE_2D,
+		width  = settings.texture_size,
+		height = settings.texture_size,
+		format = graphics.TEXTURE_FORMAT_R32F,
+		flags  = graphics.TEXTURE_USAGE_FLAG_STORAGE + graphics.TEXTURE_USAGE_FLAG_SAMPLE,
+	})
+
+	local textures = {
+		points = resource.get_texture_info(t_points).handle,
+		velocity = resource.get_texture_info(t_velocity).handle,
+		predict = resource.get_texture_info(t_predict).handle,
+		density = resource.get_texture_info(t_density).handle, -- todo: we can keep density and spatial info in the same texture
+		spatial = resource.get_texture_info(t_spatial).handle,
+	}
+
+	-- notify the renderer of the input textures, output texture is render target
+	msg.post("@render:", "set_backing_texture", textures)
+
+end
+
+
+function update(self, dt)
+	
+end
+
+
+function on_input(self, action_id, action)
+	if action_id == hash("touch") then
+		self.touch_down = true
+		if action.released then
+			self.touch_down = false
+		end
+	end
+
+	if self.touch_down and action_id == nil then
+		go.set(".", "euler.y", go.get(".", "euler.y") + action.dx * 0.5)
+		go.set(".", "euler.x", go.get(".", "euler.x") - action.dy * 0.5)
+	end
+end
