@@ -139,7 +139,7 @@ local function create_state()
     return state
 end
 
-local function set_camera_world(state)
+local function set_camera_world(state, frustum)
     local camera_components = camera.get_cameras()
 
     -- This will set the last enabled camera from the stack of camera components
@@ -148,7 +148,7 @@ local function set_camera_world(state)
             if camera.get_enabled(camera_components[i]) then
                 local camera_component = state.cameras.camera_component
                 camera_component.camera = camera_components[i]
-                render.set_camera(camera_component.camera, { use_frustum = true })
+                render.set_camera(camera_component.camera, { use_frustum = frustum })
                 -- The frustum will be overridden by the render.set_camera call,
                 -- so we don't need to return anything here other than an empty table.
                 return camera_component.options
@@ -172,10 +172,13 @@ local function reset_camera_world(state)
 end
 
 function init(self)
-    self.mouse = vmath.vector4(0)
-    self.time = vmath.vector4(0)
+    self.mode = "advanced"
+
     self.constants = render.constant_buffer()
-    self.predicates = create_predicates("tile", "gui", "particle", "model", "debug_text", "liquid")
+    self.pass3 = render.constant_buffer()
+    self.pass4 = render.constant_buffer()
+    self.pass5 = render.constant_buffer()
+    self.predicates = create_predicates("tile", "gui", "particle", "model", "debug_text", "liquid", "quad", "sky")
 
     self.sort = {}
     local num_particles = settings.texture_size * settings.texture_size
@@ -192,7 +195,6 @@ function init(self)
         k = k * 2
     end
     
-
     -- default is stretch projection. copy from builtins and change for different projection
     -- or send a message to the render script to change projection:
     -- msg.post("@render:", "use_stretch_projection", { near = -1, far = 1 })
@@ -212,104 +214,68 @@ function init(self)
     update_state(state)
 
     math.randomseed(socket.gettime()*10000)
+
+    local color_params = {
+        format = graphics.TEXTURE_FORMAT_RGBA,
+        width = render.get_window_width(),
+        height = render.get_window_height(),
+        min_filter = render.FILTER_LINEAR,
+        mag_filter = render.FILTER_LINEAR,
+        u_wrap = render.WRAP_CLAMP_TO_EDGE,
+        v_wrap = render.WRAP_CLAMP_TO_EDGE
+    }
+    
+    local color_params_rgba32 = {
+        format = graphics.TEXTURE_FORMAT_RGBA32F,
+        width = render.get_window_width(),
+        height = render.get_window_height(),
+        min_filter = render.FILTER_LINEAR,
+        mag_filter = render.FILTER_LINEAR,
+        u_wrap = render.WRAP_CLAMP_TO_EDGE,
+        v_wrap = render.WRAP_CLAMP_TO_EDGE
+    }
+
+    local color_params_r32 = {
+        format = graphics.TEXTURE_FORMAT_R32F,
+        width = render.get_window_width(),
+        height = render.get_window_height(),
+        min_filter = render.FILTER_LINEAR,
+        mag_filter = render.FILTER_LINEAR,
+        u_wrap = render.WRAP_CLAMP_TO_EDGE,
+        v_wrap = render.WRAP_CLAMP_TO_EDGE
+    }
+
+    local half_params = {
+        format = render.FORMAT_R32F,
+        width = render.get_window_width() / 2,
+        height = render.get_window_height() / 2,
+        min_filter = render.FILTER_LINEAR,
+        mag_filter = render.FILTER_LINEAR,
+        u_wrap = render.WRAP_CLAMP_TO_EDGE,
+        v_wrap = render.WRAP_CLAMP_TO_EDGE
+    }
+    
+    local depth_params = {
+        format     = render.FORMAT_DEPTH, 
+        width      = render.get_window_width(),
+        height     = render.get_window_height(),
+        u_wrap     = render.WRAP_CLAMP_TO_EDGE,
+        v_wrap     = render.WRAP_CLAMP_TO_EDGE,
+    }
+
+    self.rt_scene = render.render_target("rt_scene", {[render.BUFFER_COLOR_BIT] = color_params, [render.BUFFER_DEPTH_BIT] = depth_params})
+    self.rt_depth = render.render_target("rt_depth", {[render.BUFFER_COLOR_BIT] = color_params_r32, [render.BUFFER_DEPTH_BIT] = depth_params})
+    self.rt_blur = render.render_target("rt_blur", {[render.BUFFER_COLOR_BIT] = color_params_rgba32}) -- depth blur pass 1
+    self.rt_smooth = render.render_target("rt_smooth", {[render.BUFFER_COLOR_BIT] = color_params_rgba32}) -- depth blur pass 2
+    self.rt_thick = render.render_target("rt_thickness", {[render.BUFFER_COLOR_BIT] = half_params}) -- thickness pass
+    self.rt_normals = render.render_target("rt_normals", {[render.BUFFER_COLOR_BIT] = color_params_rgba32}) -- normals
 end
 
-function update(self, dt)
 
-    local num_particles = settings.texture_size * settings.texture_size
-    local groups = math.ceil(num_particles / 256)
-
-    render.enable_texture("points", self.points)
-    render.enable_texture("predict", self.predict)
-    render.enable_texture("spatial", self.spatial)
-    render.enable_texture("texture_density", self.density)
-    render.enable_texture("tex_velocity", self.velocity)
-
-    self.constants.options = vmath.vector4(self.dt or dt, settings.gravity, settings.texture_size, num_particles)
-    
-    if not self.points_initialized then
-        self.points_initialized = true
-        render.set_compute("initialize")
-        self.constants.display = vmath.vector4(settings.bounds_size, 0, 0, 0)
-        render.dispatch_compute(settings.texture_size, settings.texture_size, 1, {constants = self.constants})
-        render.set_compute()
-        self.need_update = true
-    end
-
-    if self.need_update then
-        --self.need_update = false
-        
-        self.constants.mouse = self.mouse
-        self.mouse.w = 0 --- reset strength
-        
-        render.set_compute("predict")
-        render.dispatch_compute(groups, 1, 1, {constants = self.constants})
-
-     
-        render.set_compute("sort")
-        
-        for _, cb in ipairs(self.sort) do
-            render.dispatch_compute(groups, 1, 1, {constants = cb})
-        end   
-
-        render.set_compute("offsets")
-        render.dispatch_compute(groups, 1, 1, {constants = self.constants})
-
-
-        render.set_compute("density")
-        render.dispatch_compute(groups, 1, 1, {constants = self.constants})
-
-        render.set_compute("pressure")
-        render.dispatch_compute(groups, 1, 1, {constants = self.constants})
-
-        render.set_compute("viscosity")
-        render.dispatch_compute(groups, 1, 1, {constants = self.constants})
-  
-        
-        render.set_compute("simulate")
-        render.dispatch_compute(groups, 1, 1, {constants = self.constants})
-
-        render.set_compute()
-    end
-    
-
-    
+local function render2d(self, draw_options_world)
     local state = self.state
-    if not state.valid then
-        if not update_state(state) then
-            return
-        end
-    end
-
     local predicates = self.predicates
-    -- clear screen buffers
-    --
-    -- turn on depth_mask before `render.clear()` to clear it as well
-    render.set_depth_mask(true)
-    render.set_stencil_mask(0xff)
-    render.clear(state.clear_buffers)
-
-    -- setup camera view and projection
-    --
-    local draw_options_world = set_camera_world(state)
-    render.set_viewport(0, 0, state.window_width, state.window_height)
-
-    -- set states used for all the world predicates
-    render.set_blend_func(graphics.BLEND_FACTOR_SRC_ALPHA, graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA)
-    render.enable_state(graphics.STATE_DEPTH_TEST)
-
-    -- render `model` predicate for default 3D material
-    --
-    render.enable_state(graphics.STATE_CULL_FACE)
-    render.enable_texture(0, self.points, render.BUFFER_COLOR0_BIT)
-    render.enable_texture(1, self.velocity, render.BUFFER_COLOR0_BIT)
-    render.draw(predicates.liquid, draw_options_world)
-    render.disable_texture(0)
-    render.disable_texture(1)
-    render.draw(predicates.model, draw_options_world)
-    render.set_depth_mask(false)
-    render.disable_state(graphics.STATE_CULL_FACE)
-
+    
     -- render the other components: sprites, tilemaps, particles etc
     --
     render.enable_state(graphics.STATE_BLEND)
@@ -332,6 +298,230 @@ function update(self, dt)
     render.draw(predicates.debug_text, camera_gui.options)
     render.disable_state(graphics.STATE_STENCIL_TEST)
     render.disable_state(graphics.STATE_BLEND)
+end
+
+function simple(self)
+    local state = self.state
+    local predicates = self.predicates
+    local draw_options_world = set_camera_world(state, true)
+
+    render.clear(state.clear_buffers)
+
+    render.set_viewport(0, 0, state.window_width, state.window_height)
+    render.set_blend_func(graphics.BLEND_FACTOR_SRC_ALPHA, graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA)
+    render.enable_state(graphics.STATE_DEPTH_TEST)
+    render.enable_state(graphics.STATE_CULL_FACE)
+    render.disable_state(graphics.STATE_BLEND)
+
+    render.draw(predicates.model, draw_options_world)
+    
+    render.enable_material("simple")
+    render.enable_texture(0, self.points, render.BUFFER_COLOR0_BIT)
+    render.draw(predicates.liquid)
+    render.disable_texture(0)
+    render.disable_material("simple")
+
+    render.set_depth_mask(false)
+    render.disable_state(graphics.STATE_CULL_FACE)
+   
+    render2d(self, draw_options_world)
+end
+
+function update(self, dt)
+
+    local num_particles = settings.texture_size * settings.texture_size
+    local groups = math.ceil(num_particles / 256)
+
+    render.enable_texture("points", self.points)
+    render.enable_texture("predict", self.predict)
+    render.enable_texture("spatial", self.spatial)
+    render.enable_texture("texture_density", self.density)
+    render.enable_texture("tex_velocity", self.velocity)
+
+    self.constants.options = vmath.vector4(dt, settings.gravity, settings.texture_size, num_particles)
+    
+    if not self.points_initialized then
+        self.points_initialized = true
+        render.set_compute("initialize")
+        self.constants.display = vmath.vector4(settings.bounds_size, 0, 0, 0)
+        render.dispatch_compute(settings.texture_size, settings.texture_size, 1, {constants = self.constants})
+        render.set_compute()
+    end
+   
+    render.set_compute("predict")
+    render.dispatch_compute(groups, 1, 1, {constants = self.constants})
+
+    render.set_compute("sort")
+        
+    for _, cb in ipairs(self.sort) do
+        render.dispatch_compute(groups, 1, 1, {constants = cb})
+    end
+
+    render.set_compute("offsets")
+    render.dispatch_compute(groups, 1, 1, {constants = self.constants})
+
+    render.set_compute("density")
+    render.dispatch_compute(groups, 1, 1, {constants = self.constants})
+
+    render.set_compute("pressure")
+    render.dispatch_compute(groups, 1, 1, {constants = self.constants})
+
+    render.set_compute("viscosity")
+    render.dispatch_compute(groups, 1, 1, {constants = self.constants})
+  
+    render.set_compute("simulate")
+    render.dispatch_compute(groups, 1, 1, {constants = self.constants})
+
+    render.set_compute()
+
+    local state = self.state
+    if not state.valid then
+        if not update_state(state) then
+            return
+        end
+    end
+
+    local predicates = self.predicates
+  
+    --
+    -- turn on depth_mask before `render.clear()` to clear it as well
+    render.set_depth_mask(true)
+    render.set_stencil_mask(0xff)
+   
+
+    -- setup camera view and projection
+    --
+   
+    if self.mode == "simple" then
+        simple(self);
+        return;
+    end
+
+    local draw_options_world = set_camera_world(state, true)
+   
+
+    -- setup shader data
+    local tx = 1./state.window_width
+    local ty = 1./state.window_height
+    local mask = 0.1
+    self.pass3.params = vmath.vector4(tx, 0, state.window_width, mask)
+    self.pass4.params = vmath.vector4(0, ty, state.window_width, mask)
+    self.pass5.invproj = vmath.inv(self.state.main_camera.proj)
+    self.pass5.invview = vmath.inv(self.state.main_camera.view)
+    self.pass5.texel =  vmath.vector4(tx, ty, 0, 0)
+    
+    -----------------------------------------------------------------------------
+    -- PASS 0: Render thickness, additive blending
+    render.set_viewport(0, 0, state.window_width/2, state.window_height/2)
+    render.set_blend_func(graphics.BLEND_FACTOR_ONE, graphics.BLEND_FACTOR_ONE)
+    render.enable_state(graphics.STATE_BLEND)
+    
+    render.set_render_target(self.rt_thick)
+    render.clear({
+        [render.BUFFER_COLOR_BIT] = vmath.vector4(0.0, 0, 0, 0), 
+    })
+    render.enable_material("thickness")
+    render.enable_texture(0, self.points, render.BUFFER_COLOR0_BIT)
+    render.draw(predicates.liquid, draw_options_world)
+    render.disable_material()
+
+    -------------------------- main passes ----------------------------
+    render.set_viewport(0, 0, state.window_width, state.window_height)
+    -- set states used for all the world predicates
+    render.set_blend_func(graphics.BLEND_FACTOR_SRC_ALPHA, graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA)
+    render.enable_state(graphics.STATE_DEPTH_TEST)
+    render.enable_state(graphics.STATE_CULL_FACE)
+    render.disable_state(graphics.STATE_BLEND)
+
+    -----------------------------------------------------------------------------
+    -- PASS 1: Render Particles to Linear Depth
+    render.set_render_target(self.rt_depth)
+    
+    render.clear({
+        [render.BUFFER_COLOR_BIT] = vmath.vector4(0, 0, 0, 0), 
+        [render.BUFFER_DEPTH_BIT] = 1.0 
+    })
+
+    render.enable_texture(0, self.points, render.BUFFER_COLOR0_BIT)
+    render.draw(predicates.liquid, draw_options_world)
+
+    -- PASS 2: copy thickness and depth
+    render.enable_render_target(self.rt_smooth)
+    render.enable_material("copy")
+    render.enable_texture(0, self.rt_depth, render.BUFFER_COLOR0_BIT)
+    render.enable_texture(1, self.rt_thick, render.BUFFER_COLOR0_BIT)
+    render.draw(predicates.quad, draw_options_world)
+    render.disable_material()
+
+    for i = 1, 3 do 
+    -----------------------------------------------------------------------------
+    -- PASS 3: Bilateral Blur (Horizontal)
+    
+    render.enable_render_target(self.rt_blur)
+    render.clear({[render.BUFFER_COLOR_BIT] = vmath.vector4(0, 0, 0, 0)})
+    render.enable_material("blur")
+    render.enable_texture(0, self.rt_smooth, render.BUFFER_COLOR_BIT)
+    draw_options_world.constants = self.pass3
+    render.draw(predicates.quad, draw_options_world)
+
+    -----------------------------------------------------------------------------
+    -- PASS 4: Bilateral Blur (Vertical)
+    render.enable_render_target(self.rt_smooth)
+    render.clear({[render.BUFFER_COLOR_BIT] = vmath.vector4(0, 0, 0, 0)})
+    render.enable_texture(0, self.rt_blur, render.BUFFER_COLOR_BIT)
+    draw_options_world.constants = self.pass4
+    render.draw(predicates.quad, draw_options_world)
+    render.disable_material()
+
+    end
+
+
+    -----------------------------------------------------------------------------
+    -- PASS 5: Create normals
+
+    render.set_render_target(self.rt_normals)
+    render.enable_material("normals")
+    render.enable_texture(0, self.rt_smooth, render.BUFFER_COLOR_BIT)
+    draw_options_world.constants = self.pass5
+    render.draw(predicates.quad, draw_options_world)
+    render.disable_material()
+
+    -----------------------------------------------------------------------------
+    -- PASS 6: Render scene
+    render.set_render_target(self.rt_scene)
+    render.clear({
+        [render.BUFFER_COLOR_BIT] = vmath.vector4(0.1, 0.1, 0.1, 1.0), 
+        [render.BUFFER_DEPTH_BIT] = 1.0 
+    })
+    render.disable_texture(0)
+    render.disable_texture(1)
+
+    render.set_depth_mask(true)
+    render.enable_state(render.STATE_DEPTH_TEST)
+    
+    render.draw(predicates.model, draw_options_world)
+
+    render.set_depth_mask(false)
+    render.disable_state(graphics.STATE_CULL_FACE)
+
+    -----------------------------------------------------------------------------
+    -- PASS 7: Combine all together
+
+    render.set_render_target(render.RENDER_TARGET_DEFAULT)
+   
+    render.enable_texture(0, self.rt_smooth, render.BUFFER_COLOR_BIT)
+    render.enable_texture(1, self.rt_normals, render.BUFFER_COLOR_BIT)
+    render.enable_texture(2, self.rt_scene, render.BUFFER_COLOR_BIT)
+    render.enable_texture(3, self.rt_scene, render.BUFFER_DEPTH_BIT)
+    
+    render.draw(predicates.quad, draw_options_world)
+    
+    render.disable_texture(0)
+    render.disable_texture(1)
+    render.disable_texture(2)
+    render.disable_texture(3)
+
+    render2d(self, draw_options_world)
 end
 
 function on_message(self, message_id, message)
@@ -364,10 +554,10 @@ function on_message(self, message_id, message)
         self.density = message.density
         self.spatial = message.spatial
         self.velocity = message.velocity
+        
 
-    elseif message_id == hash("update_liquid") then
-        self.need_update = true
-        self.dt = message.dt
+    elseif message_id == hash("toggle_mode") then
+        self.mode = self.mode == "simple" and "advanced" or "simple"
 
     elseif message_id == hash("push") then
         self.mouse = message.position

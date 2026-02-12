@@ -9,8 +9,6 @@ layout(rgba32f) uniform image2D spatial;
 
 #include "/compute/common.glsl"
 
-float input_radius = 100.;
-
 void main()
 {
     uint i = gl_GlobalInvocationID.x;

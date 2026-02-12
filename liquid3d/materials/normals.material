@@ -1,0 +1,18 @@
+name: "quad"
+tags: "quad"
+vertex_program: "/materials/quad.vp"
+fragment_program: "/materials/normals.fp"
+fragment_constants {
+  name: "invproj"
+  type: CONSTANT_TYPE_USER_MATRIX4
+  value {
+  }
+}
+samplers {
+  name: "tex0"
+  wrap_u: WRAP_MODE_REPEAT
+  wrap_v: WRAP_MODE_REPEAT
+  filter_min: FILTER_MODE_MIN_NEAREST
+  filter_mag: FILTER_MODE_MAG_NEAREST
+  max_anisotropy: 0.0
+}

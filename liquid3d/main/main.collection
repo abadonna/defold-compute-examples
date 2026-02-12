@@ -10,35 +10,64 @@ instances {
 scale_along_z: 1
 embedded_instances {
   id: "main"
-  children: "go"
+  children: "bounds"
   children: "particles"
+  children: "surface"
   data: "components {\n"
   "  id: \"main\"\n"
   "  component: \"/main/main.script\"\n"
+  "}\n"
+  "components {\n"
+  "  id: \"hud\"\n"
+  "  component: \"/main/hud.gui\"\n"
   "}\n"
   ""
 }
 embedded_instances {
   id: "camera"
-  data: "embedded_components {\n"
+  data: "components {\n"
+  "  id: \"orbit\"\n"
+  "  component: \"/orbit-cam/orbit.script\"\n"
+  "  properties {\n"
+  "    id: \"target\"\n"
+  "    value: \"/main\"\n"
+  "    type: PROPERTY_TYPE_HASH\n"
+  "  }\n"
+  "  properties {\n"
+  "    id: \"distance\"\n"
+  "    value: \"400.0\"\n"
+  "    type: PROPERTY_TYPE_NUMBER\n"
+  "  }\n"
+  "  properties {\n"
+  "    id: \"angle_x\"\n"
+  "    value: \"-0.5\"\n"
+  "    type: PROPERTY_TYPE_NUMBER\n"
+  "  }\n"
+  "  properties {\n"
+  "    id: \"angle_y\"\n"
+  "    value: \"0.5\"\n"
+  "    type: PROPERTY_TYPE_NUMBER\n"
+  "  }\n"
+  "}\n"
+  "embedded_components {\n"
   "  id: \"camera\"\n"
   "  type: \"camera\"\n"
   "  data: \"aspect_ratio: 1.0\\n"
   "fov: 0.7854\\n"
   "near_z: 0.1\\n"
-  "far_z: 2000.0\\n"
+  "far_z: 1000.0\\n"
   "auto_aspect_ratio: 1\\n"
   "\"\n"
   "}\n"
   ""
   position {
-    z: 500.0
+    z: 400.0
   }
 }
 embedded_instances {
-  id: "go"
+  id: "bounds"
   data: "embedded_components {\n"
-  "  id: \"bounds\"\n"
+  "  id: \"mesh\"\n"
   "  type: \"mesh\"\n"
   "  data: \"material: \\\"/materials/bounds.material\\\"\\n"
   "vertices: \\\"/main/bounds.buffer\\\"\\n"
@@ -64,8 +93,58 @@ embedded_instances {
   "}\n"
   ""
   scale3 {
-    x: 0.3
-    y: 0.3
-    z: 0.3
+    x: 0.31
+    y: 0.31
+    z: 0.31
+  }
+}
+embedded_instances {
+  id: "quad"
+  data: "embedded_components {\n"
+  "  id: \"model\"\n"
+  "  type: \"model\"\n"
+  "  data: \"mesh: \\\"/materials/quad.dae\\\"\\n"
+  "name: \\\"{{NAME}}\\\"\\n"
+  "materials {\\n"
+  "  name: \\\"default\\\"\\n"
+  "  material: \\\"/materials/water.material\\\"\\n"
+  "  textures {\\n"
+  "    sampler: \\\"tex_env\\\"\\n"
+  "    texture: \\\"/images/clouds.cubemap\\\"\\n"
+  "  }\\n"
+  "}\\n"
+  "\"\n"
+  "}\n"
+  ""
+}
+embedded_instances {
+  id: "surface"
+  data: "embedded_components {\n"
+  "  id: \"mesh\"\n"
+  "  type: \"model\"\n"
+  "  data: \"mesh: \\\"/builtins/assets/meshes/quad.dae\\\"\\n"
+  "name: \\\"{{NAME}}\\\"\\n"
+  "materials {\\n"
+  "  name: \\\"default\\\"\\n"
+  "  material: \\\"/builtins/materials/model.material\\\"\\n"
+  "  textures {\\n"
+  "    sampler: \\\"tex0\\\"\\n"
+  "    texture: \\\"/builtins/assets/images/logo/logo_256.png\\\"\\n"
+  "  }\\n"
+  "}\\n"
+  "\"\n"
+  "}\n"
+  ""
+  position {
+    y: -100.0
+  }
+  rotation {
+    x: -0.70710677
+    w: 0.70710677
+  }
+  scale3 {
+    x: 700.0
+    y: 700.0
+    z: 700.0
   }
 }

@@ -5,10 +5,10 @@ in mediump vec2 texcoord0;
 
 //results of compute shaders
 uniform sampler2D tex_position;
-uniform sampler2D tex_velocity;
 
 out mediump vec2 var_texcoord0;
-out mediump vec3 var_color;
+out mediump vec3 var_view_center;
+out mediump float var_radius; 
 
 uniform vs_uniforms
 {
@@ -17,23 +17,6 @@ uniform vs_uniforms
     uniform mediump mat4 mtx_proj;
     uniform mediump vec4 options; // x- size of data texure, y - particle size
 };
-
-vec3 gradient(float t) {
-    vec3 blue = vec3(.12, .32, .62);
-    vec3 green = vec3(.38, .99, .62);
-    vec3 yellow = vec3(.98, .94, .01);
-    vec3 orange = vec3(.89, .36, .09);
-
-    if (t < .5) {
-        return mix(blue, green, t * 2);
-    }
-
-    if (t < .75) {
-        return mix(green, yellow, (t - .5) * 4);
-    }
-
-    return mix(yellow, orange, (t - .75) * 4);
-}
 
 void main()
 {
@@ -45,28 +28,15 @@ void main()
 
     vec3 pos = texture(tex_position, vec2(u, v)).xyz;
     
-    // 2. Convert Center to View Space
-    // This moves the particle relative to the camera
     vec4 view_pos = mtx_worldview * vec4(pos, 1.0);
-
-    // 3. Apply Billboard Offset
-    // In View Space, the camera is always looking down -Z. 
-    // X is always "Right", Y is always "Up".
-    // So if we add the offset here, the quad automatically faces the camera!
-
-    // Center the UVs (-0.5 to 0.5) so the particle expands from its center
+    var_view_center = view_pos.xyz;
+    var_radius = particle_size / 2;
+    
     vec2 offset = (texcoord0 - 0.5) * particle_size;
-
     view_pos.xy += offset;
 
-    // 4. Project to Clip Space
     gl_Position = mtx_proj * view_pos;
 
-    // 5. Pass UVs to Fragment Shader (for drawing the circle/texture)
     var_texcoord0 = texcoord0;
-
-    vec3 velocity = texture(tex_velocity, vec2(u, v)).xyz;
-    var_color = gradient(smoothstep(0, 250, length(velocity)));
-    
 }
 

@@ -31,3 +31,23 @@ render_resources {
   name: "offsets"
   path: "/compute/offsets.compute"
 }
+render_resources {
+  name: "blur"
+  path: "/materials/blur.material"
+}
+render_resources {
+  name: "thickness"
+  path: "/materials/thickness.material"
+}
+render_resources {
+  name: "copy"
+  path: "/materials/copy.material"
+}
+render_resources {
+  name: "normals"
+  path: "/materials/normals.material"
+}
+render_resources {
+  name: "simple"
+  path: "/materials/simple.material"
+}

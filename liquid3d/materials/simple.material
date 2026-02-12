@@ -1,7 +1,7 @@
-name: "particles"
+name: "simple particles"
 tags: "liquid"
-vertex_program: "/materials/particles.vp"
-fragment_program: "/materials/particles.fp"
+vertex_program: "/materials/simple.vp"
+fragment_program: "/materials/simple.fp"
 vertex_space: VERTEX_SPACE_LOCAL
 vertex_constants {
   name: "mtx_worldview"
@@ -25,14 +25,18 @@ vertex_constants {
     w: 1.0
   }
 }
-vertex_constants {
-  name: "mtx_proj2"
-  type: CONSTANT_TYPE_PROJECTION
-}
 samplers {
   name: "tex_position"
   wrap_u: WRAP_MODE_CLAMP_TO_EDGE
   wrap_v: WRAP_MODE_CLAMP_TO_EDGE
   filter_min: FILTER_MODE_MIN_NEAREST
   filter_mag: FILTER_MODE_MAG_NEAREST
+}
+samplers {
+  name: "tex_velocity"
+  wrap_u: WRAP_MODE_CLAMP_TO_EDGE
+  wrap_v: WRAP_MODE_CLAMP_TO_EDGE
+  filter_min: FILTER_MODE_MIN_NEAREST
+  filter_mag: FILTER_MODE_MAG_NEAREST
+  max_anisotropy: 0.0
 }

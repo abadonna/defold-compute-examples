@@ -17,6 +17,7 @@ package = com.defold.example.basic3d
 [project]
 title = liquid3d
 dependencies#0 = https://github.com/britzl/defold-metrics/archive/master.zip
+dependencies#1 = https://github.com/abadonna/defold-orbit-camera/archive/master.zip
 
 [physics]
 type = 3D
@@ -32,4 +33,9 @@ scale_mode = stretch
 
 [native_extension]
 app_manifest = /vulkan.appmanifest
+
+[render]
+clear_color_red = 0.1
+clear_color_green = 0.1
+clear_color_blue = 0.1
 

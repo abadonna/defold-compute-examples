@@ -1,7 +1,7 @@
-name: "particles"
+name: "thickness"
 tags: "liquid"
 vertex_program: "/materials/particles.vp"
-fragment_program: "/materials/particles.fp"
+fragment_program: "/materials/thickness.fp"
 vertex_space: VERTEX_SPACE_LOCAL
 vertex_constants {
   name: "mtx_worldview"
@@ -24,10 +24,6 @@ vertex_constants {
     z: 1.0
     w: 1.0
   }
-}
-vertex_constants {
-  name: "mtx_proj2"
-  type: CONSTANT_TYPE_PROJECTION
 }
 samplers {
   name: "tex_position"
