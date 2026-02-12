@@ -1,6 +1,6 @@
 # Liquid simulation
 
-![screenshot](https://github.com/abadonna/defold-compute-examples/tree/main/liquid3d/blob/main/screen.png)
+![screenshot](https://github.com/abadonna/defold-compute-examples/blob/main/liquid3d/screen.png)
 
 Attempt to reproduce [another video by Sebastian Lague](https://www.youtube.com/watch?v=kOkfC5fLfgE) with Defold.
 
