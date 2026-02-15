@@ -96,5 +96,20 @@ end
 function on_input(self, action_id, action)
 	if action_id == hash("mode") and action.pressed then
 		msg.post("@render:", "toggle_mode")
+
+	elseif action_id == hash("button2") then
+			self.touch_down = true
+			if action.released then
+				self.touch_down = false
+			end
 	end
+
+	if self.touch_down and action_id == nil then
+		self.ax = self.ax - action.dy * 0.5
+		self.ay = self.ay + action.dx * 0.5
+		local q = vmath.quat_rotation_x(math.rad(self.ax)) *  vmath.quat_rotation_y(math.rad(self.ay))
+		go.set_rotation(q, "/bounds")
+		msg.post("@render:", "set_collider", {rotation = vmath.vector4(q.x, q.y, q.z, q.w)})
+	end
+	
 end

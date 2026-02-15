@@ -5,17 +5,20 @@ fonts {
 nodes {
   position {
     x: 14.552262
-    y: 621.99854
+    y: 592.2521
   }
   size {
     x: 200.0
     y: 100.0
   }
   type: TYPE_TEXT
-  text: "SPACE - change render mode"
+  text: "SPACE: change render mode\n"
+  "MOUSE 1: rotate camera\n"
+  "MOUSE 2: rotate liquid"
   font: "default"
   id: "tip"
   pivot: PIVOT_W
+  line_break: true
   inherit_alpha: true
 }
 material: "/builtins/materials/gui.material"

@@ -1,6 +1,8 @@
 uniform uniforms
 {
-	vec4 options; // k, j, texture size, num particles
+	vec4 options; // sort: k, j, texture size, num particles
+				//particles: dt, gravity,texture size, num particles
+	vec4 collider; // rotation quat
 	vec4 display;
 };
 

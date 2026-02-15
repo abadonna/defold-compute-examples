@@ -65,7 +65,7 @@ void main()
 	vec3 h = normalize(light + view_dir);
 
 	float NdotH = max(dot(normal, h), 0.0);
-	float specular = pow(NdotH, 64.0);
+	float specular = pow(NdotH, 128.0);
 
 	float NdotV = max(dot(normal, view_dir), 0.0);
 	float fresnel = 0.1 + (1.0 - 0.1) * pow(1.0 - NdotV,4.0);

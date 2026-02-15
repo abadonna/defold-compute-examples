@@ -173,6 +173,7 @@ end
 
 function init(self)
     self.mode = "advanced"
+    self.collider = vmath.vector4(0,0,0,1)
 
     self.constants = render.constant_buffer()
     self.pass3 = render.constant_buffer()
@@ -339,6 +340,7 @@ function update(self, dt)
     render.enable_texture("tex_velocity", self.velocity)
 
     self.constants.options = vmath.vector4(dt, settings.gravity, settings.texture_size, num_particles)
+    self.constants.collider = self.collider
     
     if not self.points_initialized then
         self.points_initialized = true
@@ -554,7 +556,9 @@ function on_message(self, message_id, message)
         self.density = message.density
         self.spatial = message.spatial
         self.velocity = message.velocity
-        
+
+    elseif message_id == hash("set_collider") then
+        self.collider = message.rotation
 
     elseif message_id == hash("toggle_mode") then
         self.mode = self.mode == "simple" and "advanced" or "simple"

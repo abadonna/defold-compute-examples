@@ -9,29 +9,43 @@ layout(rgba32f) uniform image2D tex_velocity;
 
 float damping = .7;
 
+vec3 rotate_vector(vec3 v, vec4 q) {
+    return v + 2.0 * cross(q.xyz, cross(q.xyz, v) + q.w * v);
+}
+
 void resolve_collisions(inout vec3 pos, inout vec3 vel) {
     float half_bounds_size = display.x / 2;
 
-    if (abs(pos.x) > half_bounds_size) {
-        pos.x = half_bounds_size * sign(pos.x);
-        vel.x *= -1 * damping;
+    vec4 inv = vec4(-collider.xyz, collider.w);
+    
+    vec3 local_pos = rotate_vector(pos, inv);
+    vec3 local_vel = rotate_vector(vel, inv);
+
+    bool collided = false;
+
+    if (abs(local_pos.x) > half_bounds_size) {
+        local_pos.x = half_bounds_size * sign(local_pos.x);
+        local_vel.x *= -1 * damping;
+        collided = true;
     }
     
-    if (abs(pos.y) > half_bounds_size) {
-        pos.y = half_bounds_size * sign(pos.y);
-        vel.y *= -1 * damping;
+    if (abs(local_pos.y) > half_bounds_size) {
+        local_pos.y = half_bounds_size * sign(local_pos.y);
+        local_vel.y *= -1 * damping;
+        collided = true;
     }
 
-    if (abs(pos.x) > half_bounds_size) {
-        pos.x = half_bounds_size * sign(pos.x);
-        vel.x *= -1 * damping;
+    if (abs(local_pos.z) > half_bounds_size) {
+        local_pos.z = half_bounds_size * sign(local_pos.z);
+        local_vel.z *= -1 * damping;
+        collided = true;
     }
 
-    if (abs(pos.z) > half_bounds_size) {
-        pos.z = half_bounds_size * sign(pos.z);
-        vel.z *= -1 * damping;
+    if (collided) {
+        pos = rotate_vector(local_pos, collider);
+        vel = rotate_vector(local_vel, collider);
     }
-
+    
 }
 
 void main()
