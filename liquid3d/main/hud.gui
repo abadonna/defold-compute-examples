@@ -4,11 +4,11 @@ fonts {
 }
 nodes {
   position {
-    x: 14.552262
-    y: 592.2521
+    x: 12.98674
+    y: 631.39014
   }
   size {
-    x: 200.0
+    x: 300.0
     y: 100.0
   }
   type: TYPE_TEXT
@@ -17,7 +17,9 @@ nodes {
   "MOUSE 2: rotate liquid"
   font: "default"
   id: "tip"
-  pivot: PIVOT_W
+  xanchor: XANCHOR_LEFT
+  yanchor: YANCHOR_TOP
+  pivot: PIVOT_NW
   line_break: true
   inherit_alpha: true
 }
